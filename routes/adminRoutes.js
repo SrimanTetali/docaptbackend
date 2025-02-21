@@ -8,7 +8,8 @@ import {
     viewAnalytics,
     getDoctorBookings,
     updateAppointmentStatusByAdmin,
-    cancelAppointmentByAdmin
+    cancelAppointmentByAdmin,
+    registerDoctorByAdmin
 } from '../controllers/adminController.js';
 import auth from '../middleware/auth.js';
 
@@ -23,4 +24,6 @@ router.get('/analytics', auth, viewAnalytics);
 router.get('/doctor-bookings/:doctorId', auth, getDoctorBookings);
 router.put('/appointment-status', auth, updateAppointmentStatusByAdmin);
 router.delete('/cancel-appointment/:bookingId', auth, cancelAppointmentByAdmin); 
+router.post('/register-doctor', auth, registerDoctorByAdmin);
+
 export default router;

@@ -35,7 +35,8 @@ const patientSchema = new mongoose.Schema({
     type: Date 
   },
   profilePhoto: { 
-    type: String 
+    type: String, 
+    default: "https://res.cloudinary.com/dagj68nid/image/upload/v1740113082/profile_rbgnjk.png" 
   },
   bookings: [
     {

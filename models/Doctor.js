@@ -26,6 +26,9 @@ const doctorSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  gender: { 
+    type: String 
+  },
   education: { 
     type: String,
     required: true, 
@@ -54,7 +57,8 @@ const doctorSchema = new mongoose.Schema({
     default: 300, 
   },
   profilePhoto: { 
-    type: String 
+    type: String ,
+    default: "https://res.cloudinary.com/dagj68nid/image/upload/v1740113082/profile_rbgnjk.png" 
   },
   createdAt: {
     type: Date,

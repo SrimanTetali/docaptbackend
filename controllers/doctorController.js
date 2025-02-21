@@ -5,7 +5,7 @@ import Doctor from '../models/Doctor.js';
 
 // **Register Doctor**
 export const registerDoctor = async (req, res) => {
-  const { name, email, password, phone, specialization, education, experience, consultingFee } = req.body;
+  const { name, email, password, phone,gender, specialization, education, experience } = req.body;
   try {
     const doctorExists = await Doctor.findOne({ email });
     if (doctorExists) {
@@ -18,10 +18,10 @@ export const registerDoctor = async (req, res) => {
       email,
       password: hashedPassword,
       phone,
+      gender,
       specialization,
       education,
       experience,
-      consultingFee      
     });
     await doctor.save();
 
@@ -72,30 +72,35 @@ export const getDoctorProfile = async (req, res) => {
   }
 };
 
-// **Update Doctor Profile**
+// Update Doctor Profile
 export const updateDoctorProfile = async (req, res) => {
-  const { name, email, phone, specialization, education, experience, about, consultingFee } = req.body;
+  const { name, email, phone,gender, specialization, education, experience, about, consultingFee, profilePhoto } = req.body;
+
   try {
     const doctor = await Doctor.findById(req.doctor);
     if (!doctor) {
       return res.status(404).json({ message: 'Doctor not found' });
     }
 
+    // Update only if new values are provided
     doctor.name = name || doctor.name;
     doctor.email = email || doctor.email;
     doctor.phone = phone || doctor.phone;
+    doctor.gender = gender || doctor.gender;
     doctor.specialization = specialization || doctor.specialization;
     doctor.education = education || doctor.education;
     doctor.experience = experience || doctor.experience;
     doctor.about = about || doctor.about;
     doctor.consultingFee = consultingFee || doctor.consultingFee;
+    doctor.profilePhoto = profilePhoto || doctor.profilePhoto;
 
     await doctor.save();
-    res.json({ message: 'Profile updated successfully' });
+    res.json({ message: 'Profile updated successfully', doctor });
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
+
 
 // **Get Doctor Bookings (Fixed)**
 export const getDoctorBookings = async (req, res) => {

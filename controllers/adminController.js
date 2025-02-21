@@ -177,3 +177,35 @@ export const cancelAppointmentByAdmin = async (req, res) => {
   }
 };
 
+
+// Admin Registering a Doctor
+export const registerDoctorByAdmin = async (req, res) => {
+  const { name, email, password, phone, gender, specialization, education, experience } = req.body;
+
+  try {
+    let doctor = await Doctor.findOne({ email });
+    if (doctor) {
+      return res.status(400).json({ message: 'Doctor already exists' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    doctor = new Doctor({
+      name,
+      email,
+      password: hashedPassword,
+      phone,
+      gender,
+      specialization,
+      education,
+      experience,
+    });
+
+    await doctor.save();
+
+    res.status(201).json({ message: 'Doctor registered successfully', doctor });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};

@@ -84,29 +84,32 @@ export const getPatientProfile = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
-
 // Update Patient Profile
 export const updatePatientProfile = async (req, res) => {
-  const { name, email, phone, address, gender, dob } = req.body;
+  const { name, email, phone, address, gender, dob, profilePhoto } = req.body;
+
   try {
     const patient = await Patient.findById(req.patient);
     if (!patient) {
       return res.status(404).json({ message: 'Patient not found' });
     }
 
+    // Update only if new values are provided
     patient.name = name || patient.name;
     patient.email = email || patient.email;
     patient.phone = phone || patient.phone;
+    patient.address = address || patient.address;
     patient.gender = gender || patient.gender;
     patient.dob = dob || patient.dob;
-    patient.address = address || patient.address;
+    patient.profilePhoto = profilePhoto || patient.profilePhoto;
 
     await patient.save();
-    res.json({ message: 'Profile updated successfully' });
+    res.json({ message: 'Profile updated successfully', patient });
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
+
 
 // Get Patient Bookings 
 export const getPatientBookings = async (req, res) => {
