@@ -1,6 +1,11 @@
 import mongoose from 'mongoose';
 
 const doctorSchema = new mongoose.Schema({
+  doctorId: {
+    type: String,
+    unique: true,
+    default: () => new mongoose.Types.ObjectId().toString(),
+  },
   name: {
     type: String,
     required: true,
@@ -27,7 +32,8 @@ const doctorSchema = new mongoose.Schema({
     required: true,
   },
   gender: { 
-    type: String 
+    type: String ,
+    required: true,
   },
   education: { 
     type: String,
@@ -60,10 +66,13 @@ const doctorSchema = new mongoose.Schema({
     type: String ,
     default: "https://res.cloudinary.com/dagj68nid/image/upload/v1740113082/profile_rbgnjk.png" 
   },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
+  bookings: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Booking',
+      },
+    ],  
+  
+},{ timestamps: true });
 
 export default mongoose.model('Doctor', doctorSchema);

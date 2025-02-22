@@ -54,7 +54,7 @@ export const loginAdmin = async (req, res) => {
       expiresIn: '1h',
     });
 
-    res.json({ token });
+    res.json({ token, admin: { id: admin._id, name: admin.name, email: admin.email } });
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
   }
@@ -92,6 +92,34 @@ export const updatePatientStatus = async (req, res) => {
     patient.status = status;
     await patient.save();
     res.json({ message: 'Patient status updated successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Delete Patient
+export const deletePatient = async (req, res) => {
+  const { patientId } = req.params;
+  try {
+    const patient = await Patient.findByIdAndDelete(patientId);
+    if (!patient) {
+      return res.status(404).json({ message: 'Patient not found' });
+    }
+    res.json({ message: 'Patient deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Delete Doctor
+export const deleteDoctor = async (req, res) => {
+  const { doctorId } = req.params;
+  try {
+    const doctor = await Doctor.findByIdAndDelete(doctorId);
+    if (!doctor) {
+      return res.status(404).json({ message: 'Doctor not found' });
+    }
+    res.json({ message: 'Doctor deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
   }

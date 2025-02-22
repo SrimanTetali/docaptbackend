@@ -3,27 +3,24 @@ import jwt from 'jsonwebtoken';
 import Booking from '../models/Booking.js';
 import Patient from '../models/Patient.js';
 import Doctor from '../models/Doctor.js';
+import mongoose from 'mongoose';
 
 // Register Patient
 export const registerPatient = async (req, res) => {
   const { name, email, password, phone, address, gender, dob } = req.body;
   try {
-    console.log("Received registration request:", req.body);
+    const lowerCaseEmail = email.toLowerCase(); // Ensure case-insensitive email uniqueness
+    const patientExists = await Patient.findOne({ email: lowerCaseEmail });
 
-    const patientExists = await Patient.findOne({ email });
     if (patientExists) {
       return res.status(400).json({ message: "Patient already exists" });
     }
 
-    console.log("Patient does not exist, proceeding with registration.");
-
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    console.log("Password hashed successfully.");
 
     const patient = new Patient({
       name,
-      email,
+      email: lowerCaseEmail,
       password: hashedPassword,
       phone,
       address,
@@ -31,13 +28,9 @@ export const registerPatient = async (req, res) => {
       dob,
     });
 
-    console.log("Patient object created:", patient);
-
     await patient.save();
 
-    console.log("Patient saved successfully.");
-
-    res.status(201).json({ message: "Patient registered successfully" });
+    res.status(201).json({ message: "Patient registered successfully", patientId: patient._id });
   } catch (error) {
     console.error("Error in registerPatient:", error);
     res.status(500).json({ message: "Server error", error: error.message });
@@ -45,42 +38,45 @@ export const registerPatient = async (req, res) => {
 };
 
 
-
-
 // Login Patient
 export const loginPatient = async (req, res) => {
   const { email, password } = req.body;
   try {
-    const patient = await Patient.findOne({ email });
+    const lowerCaseEmail = email.toLowerCase(); // Ensure case-insensitive email matching
+    const patient = await Patient.findOne({ email: lowerCaseEmail });
+
     if (!patient) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ message: 'Invalid email or password' });
     }
 
     const isMatch = await bcrypt.compare(password, patient.password);
     if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ message: 'Invalid email or password' });
     }
 
-    const token = jwt.sign({ patientId: patient._id }, process.env.JWT_SECRET, {
-      expiresIn: '1h',
-    });
+    const token = jwt.sign({ patientId: patient._id }, process.env.JWT_SECRET, { expiresIn: '2h' });
 
-    res.json({ token });
+    res.json({
+      token,
+      patient: { id: patient._id, name: patient.name, email: patient.email, phone: patient.phone },
+    });
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Internal server error' });
   }
 };
+
 
 // Get Patient Profile
 export const getPatientProfile = async (req, res) => {
   try {
-    const patient = await Patient.findById(req.patient).select('-password');
+    const patient = await Patient.findById(req.auth.id).select('-password');
     if (!patient) {
       return res.status(404).json({ message: 'Patient not found' });
     }
     res.json(patient);
   } catch (error) {
+    console.error("Error fetching patient profile:", error);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -89,14 +85,14 @@ export const updatePatientProfile = async (req, res) => {
   const { name, email, phone, address, gender, dob, profilePhoto } = req.body;
 
   try {
-    const patient = await Patient.findById(req.patient);
+    const patient = await Patient.findById(req.auth.id);
     if (!patient) {
       return res.status(404).json({ message: 'Patient not found' });
     }
 
     // Update only if new values are provided
     patient.name = name || patient.name;
-    patient.email = email || patient.email;
+    patient.email = email.toLowerCase() || patient.email;
     patient.phone = phone || patient.phone;
     patient.address = address || patient.address;
     patient.gender = gender || patient.gender;
@@ -106,7 +102,8 @@ export const updatePatientProfile = async (req, res) => {
     await patient.save();
     res.json({ message: 'Profile updated successfully', patient });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error('Error updating patient profile:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -115,14 +112,15 @@ export const updatePatientProfile = async (req, res) => {
 export const getPatientBookings = async (req, res) => {
   try {
     // Fetch bookings directly from the Booking collection
-    const bookings = await Booking.find({ patientId: req.patient });
+    const bookings = await Booking.find({ patientId: req.auth.id }).sort({ date: -1 }); ;
 
-    if (!bookings || bookings.length === 0) {
-      return res.status(404).json({ message: 'No bookings found for this patient' });
+    if (!bookings.length) {
+      return res.status(404).json({ message: "No bookings found" });
     }
 
     res.json(bookings);
   } catch (error) {
+    console.error("Error fetching patient bookings:", error);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -140,34 +138,47 @@ export const getAllDoctors = async (req, res) => {
 // Book a Session
 export const bookSession = async (req, res) => {
   try {
-    const { doctorId, patientId, date, timeSlot, urgency, reason } = req.body;
+    const { doctorId, date, timeSlot, urgency, reason } = req.body;
 
-    if (!doctorId || !patientId || !date || !timeSlot || !urgency || !reason) {
-      return res.status(400).json({ error: 'All fields are required.' });
+    if (!doctorId || !date || !timeSlot || !urgency || !reason) {
+      return res.status(400).json({ error: 'Missing required booking details' });
     }
 
     // Create a new booking
     const booking = new Booking({
-      patientId,
+      patientId: req.auth.id,
       doctorId,
       date,
       timeSlot,
       urgency,
       reason,
-      status: 'pending',
+      status: "Pending",  // Fixed case sensitivity
+      cancelledBy: null,  // Fixed default value
     });
 
     await booking.save();
 
-    res.status(201).json({ message: 'Session booked successfully', appointment: booking });
+    // Update the user's booking list
+    await Patient.findByIdAndUpdate(req.auth.id, { $push: { bookings: booking._id } });
+
+    res.status(201).json({ message: 'Session booked successfully', booking });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error('Error booking session:', error);
+    res.status(500).json({ message: 'Internal server error' });  
   }
 };
+
+
+
 export const cancelAppointment = async (req, res) => {
   try {
     const { bookingId } = req.params;
-    const { reason } = req.body;  // Accept cancellation reason
+    const { reason } = req.body;
+
+    // Validate MongoDB ID format
+    if (!mongoose.Types.ObjectId.isValid(bookingId)) {
+      return res.status(400).json({ message: "Invalid appointment ID" });
+    }
 
     // Find the booking
     const booking = await Booking.findById(bookingId);
@@ -176,21 +187,35 @@ export const cancelAppointment = async (req, res) => {
     }
 
     // Ensure only the patient who booked can cancel
-    if (booking.patientId.toString() !== req.patient) {
+    if (booking.patientId.toString() !== req.auth.id) {
       return res.status(403).json({ message: "Unauthorized: You can only cancel your own appointment" });
     }
 
-    // Only allow cancellation if the status is "pending" or "accepted"
-    if (booking.status !== "pending" && booking.status !== "accepted") {
+    // Prevent double cancellation
+    if (booking.status === "Cancelled") {
+      return res.status(400).json({ message: "Appointment is already cancelled" });
+    }
+
+    // Only allow cancellation if status is "pending" or "accepted"
+    if (!["Pending", "Accepted"].includes(booking.status)) {
       return res.status(400).json({ message: "Cannot cancel this appointment" });
     }
 
+    // Validate reason
+    const cancellationReason = reason && typeof reason === "string" && reason.trim() !== "" 
+      ? reason.trim() 
+      : "No reason provided";
+
     // Update appointment status and reason
-    booking.status = "cancelled";
-    booking.cancellationReason = reason || "No reason provided";  // Store the reason
+    booking.status = "Cancelled";
+    booking.cancellationReason = cancellationReason;
+    booking.cancelledBy = "patient";  // Track who cancelled
     await booking.save();
 
-    res.json({ message: "Appointment cancelled successfully" });
+    res.json({ 
+      message: "Appointment cancelled successfully by the patient", 
+      updatedAppointment: booking 
+    });
   } catch (error) {
     console.error("Error cancelling appointment:", error);
     res.status(500).json({ message: "Server error", error: error.message });

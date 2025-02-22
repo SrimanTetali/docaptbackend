@@ -1,20 +1,18 @@
 import mongoose from 'mongoose';
 
 const patientSchema = new mongoose.Schema({
-  patientId: {
-    type: String,
-    unique: true,
-    required: true,
-    default: () => 'PAT' + Math.floor(100000 + Math.random() * 900000),
-  },
+  
   name: {
     type: String,
     required: true,
+    trim: true,
   },
   email: {
     type: String,
     required: true,
-    unique: true,
+    unique: true, 
+    lowercase: true, 
+    trim: true
   },
   password: {
     type: String,
@@ -22,11 +20,11 @@ const patientSchema = new mongoose.Schema({
   },
   phone: {
     type: String,
-    required: true,
+    required: true, trim: true
   },
   address: {
     type: String,
-    required: true,
+    required: true,trim: true
   },
   gender: { 
     type: String 
@@ -38,16 +36,17 @@ const patientSchema = new mongoose.Schema({
     type: String, 
     default: "https://res.cloudinary.com/dagj68nid/image/upload/v1740113082/profile_rbgnjk.png" 
   },
+  role: { 
+    type: String, 
+    enum: ["Patient", "Doctor", "Admin"], 
+    default: "Patient" 
+  }, 
   bookings: [
     {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Booking',
     },
   ],
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
+},{timestamps: true});// Automatically adds createdAt & updatedAt
 
 export default mongoose.model('Patient', patientSchema);

@@ -25,12 +25,12 @@ const bookingSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'accepted', 'completed', 'cancelled', 'rejected'],
-    default: 'pending', // Fixed case sensitivity issue
+    enum: ['Pending', 'Accepted', 'Completed', 'Cancelled', 'Rejected'],
+    default: 'Pending', // Ensure case matches
   },
   paymentStatus: {
     type: String,
-    enum: ['pending', 'completed', 'refunded'],
+    enum: ['pending', 'completed'],
     default: 'pending',
   },
   paymentMethod: { 
@@ -42,14 +42,14 @@ const bookingSchema = new mongoose.Schema({
     type: String,
     default: 'Regular checkup',
   },
-  cancellationReason: {  // Added cancellation reason
+  cancellationReason: { 
     type: String,
     default: '',
   },
-  cancelledBy: {  // Identifies who canceled the appointment
+  cancelledBy: {  
     type: String,
-    enum: ['patient', 'doctor', ''],
-    default: '',
+    enum: ['patient', 'doctor', null],  // Allow null values
+    default: null, // Fix: Empty string is not a valid enum value
   },
   createdAt: {
     type: Date,

@@ -1,3 +1,4 @@
+import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
 import connectDB from './config/db.js';
@@ -13,6 +14,9 @@ connectDB();
 
 const app = express();
 
+// Enable CORS
+app.use(cors());
+
 // Middleware
 app.use(express.json());
 
@@ -23,4 +27,4 @@ app.use('/api/doctor', doctorRoutes);
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT,'0.0.0.0', () => console.log(`Server running on port  http://localhost:${PORT}`));
