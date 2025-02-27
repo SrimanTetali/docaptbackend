@@ -6,6 +6,7 @@ import {
     loginPatient,
     registerPatient,
     getAllDoctors,
+    getDoctorById,
     updatePatientProfile,
     cancelAppointment,
     
@@ -20,6 +21,7 @@ router.get('/profile', auth, getPatientProfile);
 router.put('/profile', auth, updatePatientProfile);
 router.get('/bookings', auth, getPatientBookings);
 router.get('/doctors', auth, getAllDoctors);
+router.get("/doctors/:id", auth, getDoctorById);
 router.post('/book-session', auth, bookSession);
 router.put('/cancel/:bookingId', auth, cancelAppointment);
 

@@ -37,32 +37,48 @@ export const registerDoctor = async (req, res) => {
 };
 
 // **Login Doctor**
+
 export const loginDoctor = async (req, res) => {
   const { email, password } = req.body;
   try {
-    const doctor = await Doctor.findOne({ email });
+    const lowerCaseEmail = email.toLowerCase(); // Ensure case-insensitive email matching
+    const doctor = await Doctor.findOne({ email: lowerCaseEmail });
+
     if (!doctor) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ message: "Invalid email or password" });
     }
 
     const isMatch = await bcrypt.compare(password, doctor.password);
     if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ message: "Invalid email or password" });
     }
 
     const token = jwt.sign(
       { doctorId: doctor._id },
       process.env.JWT_SECRET,
-      {
-        expiresIn: '1h',
-      }
+      { expiresIn: "2h" }
     );
 
-    res.json({ token, doctor });
+    const responsePayload = {
+      token,
+      doctor: {
+        id: doctor._id,
+        name: doctor.name,
+        email: doctor.email,
+        phone: doctor.phone,
+        specialization: doctor.specialization,
+      },
+    };
+
+    console.log("Doctor Login Response:", JSON.stringify(responsePayload, null, 2)); // Log response
+    res.json(responsePayload);
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    console.error("Doctor Login Error:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
+
+
 export const getDoctorProfile = async (req, res) => {
   try {
     const doctor = await Doctor.findById(req.auth.id).select('-password'); // ✅ Corrected field
@@ -78,7 +94,7 @@ export const getDoctorProfile = async (req, res) => {
 
 // Update Doctor Profile
 export const updateDoctorProfile = async (req, res) => {
-  const { name, email, phone,gender, specialization, education, experience, about, consultingFee, profilePhoto } = req.body;
+  const { name, email, phone,gender, specialization, education, experience, about, consultingFee, profilePhoto, timeSlots } = req.body;
 
   try {
     const doctor = await Doctor.findById(req.auth.id);
@@ -97,6 +113,7 @@ export const updateDoctorProfile = async (req, res) => {
     doctor.about = about || doctor.about;
     doctor.consultingFee = consultingFee || doctor.consultingFee;
     doctor.profilePhoto = profilePhoto || doctor.profilePhoto;
+    doctor.timeSlots = timeSlots || doctor.timeSlots;
 
     await doctor.save();
     res.json({ message: 'Profile updated successfully', doctor });

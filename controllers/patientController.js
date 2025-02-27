@@ -46,25 +46,29 @@ export const loginPatient = async (req, res) => {
     const patient = await Patient.findOne({ email: lowerCaseEmail });
 
     if (!patient) {
-      return res.status(401).json({ message: 'Invalid email or password' });
+      return res.status(401).json({ message: "Invalid email or password" });
     }
 
     const isMatch = await bcrypt.compare(password, patient.password);
     if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid email or password' });
+      return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    const token = jwt.sign({ patientId: patient._id }, process.env.JWT_SECRET, { expiresIn: '2h' });
+    const token = jwt.sign({ patientId: patient._id }, process.env.JWT_SECRET, { expiresIn: "2h" });
 
-    res.json({
+    const responsePayload = {
       token,
       patient: { id: patient._id, name: patient.name, email: patient.email, phone: patient.phone },
-    });
+    };
+
+    console.log("Login response:", JSON.stringify(responsePayload, null, 2)); // Log response
+    res.json(responsePayload);
   } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    console.error("Login error:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 
 // Get Patient Profile
@@ -111,8 +115,13 @@ export const updatePatientProfile = async (req, res) => {
 // Get Patient Bookings 
 export const getPatientBookings = async (req, res) => {
   try {
-    // Fetch bookings directly from the Booking collection
-    const bookings = await Booking.find({ patientId: req.auth.id }).sort({ date: -1 }); ;
+    // Fetch bookings and populate doctor details
+    const bookings = await Booking.find({ patientId: req.auth.id })
+      .populate({
+        path: "doctorId", // Reference to Doctor model
+        select: "name profilePhoto specialization consultingFee" // Select required fields
+      })
+      .sort({ date: -1 });
 
     if (!bookings.length) {
       return res.status(404).json({ message: "No bookings found" });
@@ -121,9 +130,10 @@ export const getPatientBookings = async (req, res) => {
     res.json(bookings);
   } catch (error) {
     console.error("Error fetching patient bookings:", error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 };
+
 
 // Get All Doctors
 export const getAllDoctors = async (req, res) => {
@@ -134,6 +144,25 @@ export const getAllDoctors = async (req, res) => {
     res.status(500).json({ message: 'Error fetching doctors', error: error.message });
   }
 };
+
+
+// Fetch a particular doctor by ID
+export const getDoctorById = async (req, res) => {
+  try {
+    const doctorId = req.params.id;
+    const doctor = await Doctor.findById(doctorId);
+
+    if (!doctor) {
+      return res.status(404).json({ message: "Doctor not found" });
+    }
+
+    res.status(200).json(doctor);
+  } catch (error) {
+    console.error("Error fetching doctor:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
 
 // Book a Session
 export const bookSession = async (req, res) => {
