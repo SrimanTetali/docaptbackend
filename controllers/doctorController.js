@@ -2,10 +2,12 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import Booking from '../models/Booking.js';
 import Doctor from '../models/Doctor.js';
+import { sendEmail } from "../config/emailService.js";  // ✅ Correct
+import mongoose from "mongoose";
 
 // **Register Doctor**
 export const registerDoctor = async (req, res) => {
-  const { name, email, password, phone,gender, specialization, education, experience } = req.body;
+  const { name, email, password, phone, gender, specialization, education, experience } = req.body;
   try {
     const doctorExists = await Doctor.findOne({ email });
     if (doctorExists) {
@@ -13,7 +15,7 @@ export const registerDoctor = async (req, res) => {
     }
     if (!name || !email || !password || !phone || !gender || !specialization || !education || !experience) {
       return res.status(400).json({ message: "All fields are required" });
-  }  
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const doctor = new Doctor({
@@ -32,7 +34,7 @@ export const registerDoctor = async (req, res) => {
   } catch (error) {
     console.error("Doctor Registration Error:", error); // Log the actual error
     res.status(500).json({ message: "Server error", error: error.message });
-}
+  }
 
 };
 
@@ -94,7 +96,7 @@ export const getDoctorProfile = async (req, res) => {
 
 // Update Doctor Profile
 export const updateDoctorProfile = async (req, res) => {
-  const { name, email, phone,gender, specialization, education, experience, about, consultingFee, profilePhoto, timeSlots } = req.body;
+  const { name, email, phone, gender, specialization, education, experience, about, consultingFee, profilePhoto, timeSlots } = req.body;
 
   try {
     const doctor = await Doctor.findById(req.auth.id);
@@ -153,7 +155,7 @@ export const getDoctorBookings = async (req, res) => {
 // **Update Booking Status**
 export const updateBookingStatus = async (req, res) => {
   const { bookingId, status } = req.body;
-  const validStatuses = ['Pending', 'Accepted', 'Completed', 'Cancelled', 'Rejected'];
+  const validStatuses = ["Pending", "Accepted", "Completed", "Cancelled", "Rejected"];
 
   try {
     console.log("Updating booking status for bookingId:", bookingId);
@@ -163,23 +165,41 @@ export const updateBookingStatus = async (req, res) => {
       return res.status(400).json({ message: "Invalid status value" });
     }
 
-    const booking = await Booking.findById(bookingId);
+    const booking = await Booking.findById(bookingId)
+      .populate("patientId", "email name")
+      .populate("doctorId", "email name");
+
     if (!booking) {
       return res.status(404).json({ message: "Booking not found" });
     }
 
-    // Ensure only the assigned user can update
-    if (booking.doctorId.toString() !== req.auth.id) {
-      return res.status(403).json({ message: "Unauthorized: You can only update your own bookings" });
-    }
-
     // Prevent reverting completed bookings
-    if (booking.status === "Completed" && status !== "Completed") {
+    if (booking.status === "Completed") {
       return res.status(400).json({ message: "Cannot revert a completed booking" });
     }
 
     booking.status = status;
     await booking.save();
+
+    // Send email to patient
+    const patientEmail = booking.patientId.email;
+    const patientName = booking.patientId.name;
+    const doctorName = booking.doctorId.name;
+
+    let subject = "";
+    let message = "";
+
+    if (status === "Accepted") {
+      subject = "Your Appointment has been Accepted!";
+      message = `Dear ${patientName},\n\nYour appointment with ${doctorName} has been accepted.\n\nBest Regards,\neDocapt Team`;
+    } else if (status === "Rejected") {
+      subject = "Your Appointment has been Rejected";
+      message = `Dear ${patientName},\n\nUnfortunately, ${doctorName} has rejected your appointment request.\n\nBest Regards,\neDocapt Team`;
+    }
+
+    if (subject && message) {
+      sendEmail(patientEmail, subject, message);
+    }
 
     res.json({ message: "Booking status updated successfully", updatedBooking: booking });
   } catch (error) {
@@ -189,53 +209,54 @@ export const updateBookingStatus = async (req, res) => {
 };
 
 
-import mongoose from "mongoose";
 
 export const cancelAppointmentByDoctor = async (req, res) => {
   try {
     const { bookingId } = req.params;
     const { reason } = req.body;
 
-    // Validate bookingId format
     if (!mongoose.Types.ObjectId.isValid(bookingId)) {
       return res.status(400).json({ message: "Invalid appointment ID" });
     }
 
-    // Find the appointment
-    const booking = await Booking.findById(bookingId);
+    const booking = await Booking.findById(bookingId)
+      .populate("patientId", "email name")
+      .populate("doctorId", "email name");
     if (!booking) {
       return res.status(404).json({ message: "Appointment not found" });
     }
 
-    // Ensure only the assigned doctor can cancel
-    if (booking.doctorId.toString() !== req.auth.id) {
-      return res.status(403).json({ message: "Unauthorized: You can only cancel your own appointments" });
-    }
 
-    // Prevent re-canceling
-    if (booking.status === "cancelled") {
+    if (booking.status === "Cancelled") {
       return res.status(400).json({ message: "Appointment is already cancelled" });
     }
 
-    // Only allow cancellation if status is "pending" or "accepted"
-    if (!["pending", "accepted"].includes(booking.status)) {
+    if (!["Pending", "Accepted"].includes(booking.status)) {
       return res.status(400).json({ message: "Cannot cancel this appointment" });
     }
 
-    // Validate reason
-    const cancellationReason = reason && typeof reason === "string" && reason.trim() !== "" 
-      ? reason.trim() 
+    const cancellationReason = reason && typeof reason === "string" && reason.trim() !== ""
+      ? reason.trim()
       : "No reason provided";
 
-    // Update appointment status and reason
-    booking.status = "cancelled";
+    booking.status = "Cancelled";
     booking.cancellationReason = cancellationReason;
     booking.cancelledBy = "doctor";
     await booking.save();
 
-    res.json({ 
-      message: "Appointment cancelled successfully by the doctor", 
-      updatedAppointment: booking 
+    // Send cancellation email
+    const patientEmail = booking.patientId.email;
+    const patientName = booking.patientId.name;
+    const doctorName = booking.doctorId.name;
+
+    const subject = "Your Appointment has been Cancelled";
+    const message = `Dear ${patientName},\n\nYour appointment with ${doctorName} has been cancelled.\nReason: ${cancellationReason}\n\nBest Regards,\neDocapt Team`;
+
+    sendEmail(patientEmail, subject, message);
+
+    res.json({
+      message: "Appointment cancelled successfully by the doctor",
+      updatedAppointment: booking
     });
   } catch (error) {
     console.error("Error cancelling appointment:", error);

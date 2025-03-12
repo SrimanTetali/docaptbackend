@@ -5,13 +5,12 @@ import connectDB from './config/db.js';
 import adminRoutes from './routes/adminRoutes.js';
 import doctorRoutes from './routes/doctorRoutes.js';
 import patientRoutes from './routes/patientRoutes.js';
-
+import homeRoutes from './routes/homeRoutes.js';
 // Load environment variables
 dotenv.config();
 
 // Connect to MongoDB
 connectDB();
-
 const app = express();
 
 // Enable CORS
@@ -24,6 +23,7 @@ app.use(express.json());
 app.use('/api/patient', patientRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/doctor', doctorRoutes);
+app.use('/api', homeRoutes);
 
 const PORT = process.env.PORT || 5000;
 

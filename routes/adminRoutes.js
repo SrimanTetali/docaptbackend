@@ -1,6 +1,7 @@
 import express from 'express';
 import {
     getAllDoctors,
+    deleteDoctor,
     getAllPatients,
     loginAdmin,
     registerAdmin,
@@ -21,6 +22,7 @@ router.put('/patient-status', auth, updatePatientStatus);
 
 router.get('/doctors', auth, getAllDoctors);
 router.get('/doctor-bookings/:doctorId', auth, getDoctorBookings);
+router.delete('/delete-doctor/:doctorId', auth, deleteDoctor);
 
 router.get('/analytics', auth, viewAnalytics);
 router.post('/register-doctor', auth, registerDoctorByAdmin);

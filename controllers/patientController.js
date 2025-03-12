@@ -7,7 +7,8 @@ import mongoose from 'mongoose';
 
 // Register Patient
 export const registerPatient = async (req, res) => {
-  const { name, email, password, phone, address, gender, dob } = req.body;
+  const { name, email, password, phone, address, gender, dob, age, bloodGroup } = req.body;
+
   try {
     const lowerCaseEmail = email.toLowerCase(); // Ensure case-insensitive email uniqueness
     const patientExists = await Patient.findOne({ email: lowerCaseEmail });
@@ -26,6 +27,8 @@ export const registerPatient = async (req, res) => {
       address,
       gender,
       dob,
+      age, // Added age field
+      bloodGroup, // Added bloodGroup field
     });
 
     await patient.save();
@@ -86,7 +89,7 @@ export const getPatientProfile = async (req, res) => {
 };
 // Update Patient Profile
 export const updatePatientProfile = async (req, res) => {
-  const { name, email, phone, address, gender, dob, profilePhoto } = req.body;
+  const { name, email, phone, address, gender, dob, profilePhoto, age, bloodGroup } = req.body;
 
   try {
     const patient = await Patient.findById(req.auth.id);
@@ -102,6 +105,8 @@ export const updatePatientProfile = async (req, res) => {
     patient.gender = gender || patient.gender;
     patient.dob = dob || patient.dob;
     patient.profilePhoto = profilePhoto || patient.profilePhoto;
+    patient.age = age || patient.age;
+    patient.bloodGroup = bloodGroup || patient.bloodGroup;
 
     await patient.save();
     res.json({ message: 'Profile updated successfully', patient });

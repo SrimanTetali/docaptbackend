@@ -1,7 +1,6 @@
 import mongoose from 'mongoose';
 
 const patientSchema = new mongoose.Schema({
-  
   name: {
     type: String,
     required: true,
@@ -20,17 +19,28 @@ const patientSchema = new mongoose.Schema({
   },
   phone: {
     type: String,
-    required: true, trim: true
+    required: true, 
+    trim: true
   },
   address: {
     type: String,
-    required: true,trim: true
+    required: true, 
+    trim: true
   },
   gender: { 
     type: String 
   },
   dob: { 
-    type: Date 
+    type: Date,
+    required: true 
+  },
+  age: { 
+    type: Number,  // Manually entered by the user
+    required: true 
+  },
+  bloodGroup: { 
+    type: String, 
+    enum: ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"] 
   },
   profilePhoto: { 
     type: String, 
@@ -47,6 +57,6 @@ const patientSchema = new mongoose.Schema({
       ref: 'Booking',
     },
   ],
-},{timestamps: true});// Automatically adds createdAt & updatedAt
+},{timestamps: true}); // Automatically adds createdAt & updatedAt
 
 export default mongoose.model('Patient', patientSchema);
