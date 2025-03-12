@@ -8,6 +8,7 @@ import {
     getAllDoctors,
     getDoctorById,
     updatePatientProfile,
+    getDoctorBookings,
     cancelAppointment,
     
 } from '../controllers/patientController.js';
@@ -24,5 +25,6 @@ router.get('/doctors', auth, getAllDoctors);
 router.get("/doctors/:id", auth, getDoctorById);
 router.post('/book-session', auth, bookSession);
 router.put('/cancel/:bookingId', auth, cancelAppointment);
+router.get('/doctors/:doctorId/bookings', getDoctorBookings);
 
 export default router;

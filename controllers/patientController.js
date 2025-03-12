@@ -255,3 +255,33 @@ export const cancelAppointment = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+
+// Get Bookings for a Particular Doctor by Doctor ID
+export const getDoctorBookings = async (req, res) => {
+  try {
+    const { doctorId } = req.params;
+
+    // Validate MongoDB ID format
+    if (!mongoose.Types.ObjectId.isValid(doctorId)) {
+      return res.status(400).json({ message: "Invalid doctor ID" });
+    }
+
+    // Fetch bookings for the specified doctor and populate patient details
+    const bookings = await Booking.find({ doctorId })
+      .populate({
+        path: "patientId", // Reference to Patient model
+        select: "name email phone", // Select required fields
+      })
+      .sort({ date: -1 }); // Sort by date in descending order
+
+    if (!bookings.length) {
+      return res.status(404).json({ message: "No bookings found for this doctor" });
+    }
+
+    res.status(200).json(bookings);
+  } catch (error) {
+    console.error("Error fetching doctor bookings:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
