@@ -124,7 +124,7 @@ export const getPatientBookings = async (req, res) => {
     const bookings = await Booking.find({ patientId: req.auth.id })
       .populate({
         path: "doctorId", // Reference to Doctor model
-        select: "name profilePhoto specialization consultingFee" // Select required fields
+        select: "name profilePhoto specialization consultingFee hospitalName hospitalAddress" // Select required fields
       })
       .sort({ date: -1 });
 

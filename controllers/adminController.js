@@ -208,7 +208,7 @@ export const cancelAppointmentByAdmin = async (req, res) => {
 
 // Admin Registering a Doctor
 export const registerDoctorByAdmin = async (req, res) => {
-  const { name, email, password, phone, gender, specialization, education, experience } = req.body;
+  const { name, email, password, phone, gender, specialization, education, experience, hospitalName, hospitalAddress} = req.body;
 
   try {
     let doctor = await Doctor.findOne({ email });
@@ -228,6 +228,8 @@ export const registerDoctorByAdmin = async (req, res) => {
       specialization,
       education,
       experience,
+      hospitalAddress,
+      hospitalName,
     });
 
     await doctor.save();

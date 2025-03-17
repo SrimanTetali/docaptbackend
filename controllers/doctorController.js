@@ -7,13 +7,13 @@ import mongoose from "mongoose";
 
 // **Register Doctor**
 export const registerDoctor = async (req, res) => {
-  const { name, email, password, phone, gender, specialization, education, experience } = req.body;
+  const { name, email, password, phone, gender, specialization, education, experience, hospitalName,hospitalAddress } = req.body;
   try {
     const doctorExists = await Doctor.findOne({ email });
     if (doctorExists) {
       return res.status(400).json({ message: 'Doctor already exists' });
     }
-    if (!name || !email || !password || !phone || !gender || !specialization || !education || !experience) {
+    if (!name || !email || !password || !phone || !gender || !specialization || !education || !experience || !hospitalName || !hospitalAddress) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -27,6 +27,8 @@ export const registerDoctor = async (req, res) => {
       specialization,
       education,
       experience,
+      hospitalName,
+      hospitalAddress,
     });
     await doctor.save();
 
@@ -96,7 +98,7 @@ export const getDoctorProfile = async (req, res) => {
 
 // Update Doctor Profile
 export const updateDoctorProfile = async (req, res) => {
-  const { name, email, phone, gender, specialization, education, experience, about, consultingFee, profilePhoto, timeSlots } = req.body;
+  const { name, email, phone, gender, specialization, education, experience, about, consultingFee, profilePhoto, timeSlots, hospitalName, hospitalAddress } = req.body;
 
   try {
     const doctor = await Doctor.findById(req.auth.id);
@@ -116,6 +118,8 @@ export const updateDoctorProfile = async (req, res) => {
     doctor.consultingFee = consultingFee || doctor.consultingFee;
     doctor.profilePhoto = profilePhoto || doctor.profilePhoto;
     doctor.timeSlots = timeSlots || doctor.timeSlots;
+    doctor.hospitalName = hospitalName || doctor.hospitalName;
+    doctor.hospitalAddress = hospitalAddress || doctor.hospitalAddress;
 
     await doctor.save();
     res.json({ message: 'Profile updated successfully', doctor });
@@ -124,6 +128,7 @@ export const updateDoctorProfile = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 
 
 // **Get Doctor Bookings (Fixed)**

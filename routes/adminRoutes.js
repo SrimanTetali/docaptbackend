@@ -25,6 +25,6 @@ router.get('/doctor-bookings/:doctorId', auth, getDoctorBookings);
 router.delete('/delete-doctor/:doctorId', auth, deleteDoctor);
 
 router.get('/analytics', auth, viewAnalytics);
-router.post('/register-doctor', auth, registerDoctorByAdmin);
+router.post('/register-doctor', registerDoctorByAdmin);
 
 export default router;

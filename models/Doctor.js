@@ -19,6 +19,16 @@ const doctorSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  hospitalName: {
+    type: String,
+    required: true,
+    default: '', 
+  },
+  hospitalAddress: {
+    type: String,
+    required: true,
+    default: '', 
+  },
   phone: {
     type: String,
     required: true,
@@ -32,15 +42,15 @@ const doctorSchema = new mongoose.Schema({
     required: true,
   },
   gender: { 
-    type: String ,
+    type: String,
     required: true,
   },
   education: { 
     type: String,
     required: true, 
   },
-  about:{
-    type:String,
+  about: {
+    type: String,
     default: "Experienced medical professional providing quality healthcare.",
   },
   availability: {
@@ -70,16 +80,15 @@ const doctorSchema = new mongoose.Schema({
     default: 300, 
   },
   profilePhoto: { 
-    type: String ,
+    type: String,
     default: "https://res.cloudinary.com/dagj68nid/image/upload/v1740113082/profile_rbgnjk.png" 
   },
   bookings: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Booking',
-      },
-    ],  
-  
-},{ timestamps: true });
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Booking',
+    },
+  ],  
+}, { timestamps: true });
 
 export default mongoose.model('Doctor', doctorSchema);
