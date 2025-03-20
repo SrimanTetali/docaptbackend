@@ -1,5 +1,25 @@
 import Doctor from '../models/Doctor.js';
 import Contact from '../models/Contact.js';
+import Patient from '../models/Patient.js';
+import Booking from '../models/Booking.js';
+
+export const getAllBookings = async (req, res) => {
+  try {
+    const bookings = await Booking.find();
+    res.status(200).json(bookings);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching bookings', error: error.message });
+  }
+};
+
+export const getAllPatients = async (req, res) => {
+  try {
+    const patients = await Patient.find();
+    res.status(200).json(patients);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching patients', error: error.message });
+  }
+};
 
 // Get All Doctors
 export const getAllDoctors = async (req, res) => {
