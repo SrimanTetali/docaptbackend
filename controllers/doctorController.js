@@ -190,16 +190,69 @@ export const updateBookingStatus = async (req, res) => {
     const patientEmail = booking.patientId.email;
     const patientName = booking.patientId.name;
     const doctorName = booking.doctorId.name;
+    const appointmentDate = new Date(booking.date).toLocaleDateString();
+    const appointmentTime = booking.timeSlot;
 
     let subject = "";
     let message = "";
 
     if (status === "Accepted") {
       subject = "Your Appointment has been Accepted!";
-      message = `Dear ${patientName},\n\nYour appointment with ${doctorName} has been accepted.\n\nBest Regards,\neDocapt Team`;
+      message = `
+        Dear ${patientName},
+
+        We are pleased to inform you that your appointment with ${doctorName} has been confirmed.
+
+        Appointment Details:
+        - Date: ${appointmentDate}
+        - Time: ${appointmentTime}
+        - Doctor: ${doctorName}
+
+        Please ensure you arrive on time for your appointment. If you have any questions or need to reschedule, feel free to contact us.
+
+        Thank you for choosing eDocapt. We look forward to serving you!
+
+        Best Regards,
+        The eDocapt Team
+      `;
     } else if (status === "Rejected") {
       subject = "Your Appointment has been Rejected";
-      message = `Dear ${patientName},\n\nUnfortunately, ${doctorName} has rejected your appointment request.\n\nBest Regards,\neDocapt Team`;
+      message = `
+        Dear ${patientName},
+
+        We regret to inform you that your appointment request with ${doctorName} has been rejected.
+
+        Appointment Details:
+        - Date: ${appointmentDate}
+        - Time: ${appointmentTime}
+        - Doctor: ${doctorName}
+
+        If you have any questions or would like to reschedule, please log in to your account or contact our support team.
+
+        We apologize for any inconvenience this may have caused and hope to assist you in the future.
+
+        Best Regards,
+        The eDocapt Team
+      `;
+    } else if (status === "Cancelled") {
+      subject = "Your Appointment has been Cancelled";
+      message = `
+        Dear ${patientName},
+
+        Your appointment with ${doctorName} has been cancelled.
+
+        Appointment Details:
+        - Date: ${appointmentDate}
+        - Time: ${appointmentTime}
+        - Doctor: ${doctorName}
+
+        If you need to reschedule or have any questions, please log in to your account or contact our support team.
+
+        Thank you for choosing eDocapt. We hope to assist you again soon.
+
+        Best Regards,
+        The eDocapt Team
+      `;
     }
 
     if (subject && message) {
